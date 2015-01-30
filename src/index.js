@@ -179,18 +179,22 @@ function route (req, res) {
 
   if ( '/'+$route.pathname_arr[0] != uri_prefix) {
 
-    fs.readFile(tpl_dir+'/index.html', 'UTF-8', function (err, data) {
+    // fs.readFile(tpl_dir+'/index.html', 'UTF-8', function (err, data) {
 
-      if (err) {
-        console.log(err)
-        $route.onError("TEMPLATES_SYS_ERR")
-      } else {
-        $route.type = "html"
-        $route.data = data
-        $route.end()
-      }
+    //   if (err) {
+    //     console.log(err)
+    //     $route.onError("TEMPLATES_SYS_ERR")
+    //   } else {
+    //     $route.type = "html"
+    //     $route.data = data
+    //     $route.end()
+    //   }
 
-    })
+    // })
+
+
+    $route.onError('NOT_FOUND')
+  
 
   } else if (typeof states[pathname] == 'undefined') {
     $route.onError("NOT_FOUND")
