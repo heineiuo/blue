@@ -30,4 +30,3 @@ function sort(array, sorttype) {
 
 }
 
-exports.sort = sort

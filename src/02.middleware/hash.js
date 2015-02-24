@@ -12,6 +12,3 @@ function sha1(data) {
    return sha1.digest('hex');
 }
 
-
-exports.md5 = md5
-exports.sha1 = sha1

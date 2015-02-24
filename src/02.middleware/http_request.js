@@ -1,9 +1,6 @@
 
-var http = require('http');
-var querystring = require('querystring');
 
-
-function post(data, options, callback) {
+function http_post(data, options, callback) {
 
   // var data = {
   //   "module": "account",
@@ -98,9 +95,3 @@ function get(data, options, callback) {
   req.end();
 
 }
-
-
-exports.get = get
-exports.post = post
-
-
