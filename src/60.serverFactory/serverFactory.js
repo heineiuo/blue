@@ -1,18 +1,15 @@
 function serverFactory () {
 
+  /**
+   * 依赖管理
+   */
+  var http  = require('http')
+  var url   = require('url')
+  var mysql = require('mysql')
+  var util  = require('util')
+  var fs    = require('fs')
+
   function createServer (config) {
-
-    /**
-     * 依赖管理
-     */
-    var http  = require('http')
-    var url   = require('url')
-    var mysql = require('mysql')
-    var util  = require('util')
-    var fs    = require('fs')
-    var querystring = require('querystring')
-    var formidable  = require('formidable')
-
 
     /**
      * private
@@ -118,8 +115,6 @@ function serverFactory () {
 
         } else {
 
-
-          
           return false
         
         }
@@ -140,10 +135,8 @@ function serverFactory () {
 
       get_config: function() {
         return config
-      },
-
-      parse: parse
-
+      }
+      
     } // end server
 
     return server 
@@ -151,12 +144,10 @@ function serverFactory () {
   }
 
   return {
-    get_req_param: get_req_param,
     createServer: createServer,
     md5: md5,
     sha1: sha1,
     http_post: http_post,
-    validator: validator
   }
 
 }

@@ -70,40 +70,6 @@ function dir_create (dir) {
 }
 
 
-
-
-function get_req_param (req) {
-
-  var url = require('url')
-
-  var method = req.method.toLowerCase()
-  var pathname = url.parse(req.url).pathname
-  var pathname_arr = pathname.substr(1).split('/')
-  var search   = url.parse(req.url).search; // req.headers.referer
-  var searches = search != null?querystring.parse(search.substring(1)):{}
-  var ip       = req.headers['x-forwarded-for'] || 
-    req.connection.remoteAddress || 
-    req.socket.remoteAddress || 
-    req.connection.socket.remoteAddress
-
-  var cookies = {};
-  req.headers.cookie && req.headers.cookie.split(';').forEach(function( Cookie ) {
-      var parts = Cookie.split('=');
-      cookies[ parts[ 0 ].trim() ] = ( parts[ 1 ] || '' ).trim();
-  });
-
-  return {
-    method: method,
-    pathname: pathname,
-    pathname_arr: pathname_arr,
-    search: search,
-    searches: searches,
-    ip: ip,
-    cookies: cookies
-  }
-
-}
-
 function md5(data) {
    var md5 = require('crypto').createHash('md5');
    md5.update(data);
@@ -280,65 +246,7 @@ function open (config) {
 
   };
 
-
   debug()
-
-
-
-
-}
-
-
-
-function parse (req, callback) {
-
-  var method = get_req_param(req).method
-
-  if (method == 'post') {
-
-    var form = new formidable.IncomingForm()
-    var result = {
-      "searches": {},
-      "files": []
-    }
-
-    /**
-     * 缓存目录
-     */
-    form.uploadDir = temp_dir
-
-    form.on('progress', function(bytesReceived, bytesExpected) {
-
-    })
-
-    .on('field', function(field, value) {
-      result.searches[field] = value
-    })
-
-    .on('file', function(file, value) {
-      result.files.push(file, value)
-    })
-
-    .on('aborted', function() {
-      result.error = "UNEXCEPT_ERROR"
-    })
-
-    .on('error', function(err) {
-      result.error = "UNEXCEPT_ERROR"
-    })
-
-    .on('end', function() {
-      callback(result)
-    })
-
-    form.parse(req)
-
-  } else {
-
-    callback({error: "ONLY_POST"})
-
-  }
-
 
 }
 
@@ -432,6 +340,8 @@ function validator (type, value) {
 function wrap_req (req) {
 
   var url = require('url')
+  var formidable  = require('formidable')
+  var querystring = require('querystring')
 
   var method = req.method.toLowerCase()
   var pathname = url.parse(req.url).pathname
@@ -457,6 +367,55 @@ function wrap_req (req) {
   req.searches = searches
   req.ip = ip
   req.cookies = cookies
+
+
+  req.parse = function (callback) {
+
+    if (method == 'post') {
+
+      var form = new formidable.IncomingForm()
+      var parseData = {
+        file_stack: []
+      }
+
+      /**
+       * 缓存目录
+       */
+      form.uploadDir = __dirname
+
+      form.on('progress', function(bytesReceived, bytesExpected) {
+
+      })
+
+      .on('field', function(field, value) {
+        req.searches[field] = value
+      })
+
+      .on('file', function(file, value) {
+        parseData.file_stack.push(file, value)
+      })
+
+      .on('aborted', function() {
+        callback('aborted')
+      })
+
+      .on('error', function(err) {
+        callback('error')
+      })
+
+      .on('end', function() {
+        callback(false, parseData)
+      })
+
+      form.parse(this)
+
+    } else {
+
+      callback('method_error')
+
+    }
+
+  }
 
 
   return req
@@ -524,19 +483,16 @@ function appFactory () {
 
 function serverFactory () {
 
+  /**
+   * 依赖管理
+   */
+  var http  = require('http')
+  var url   = require('url')
+  var mysql = require('mysql')
+  var util  = require('util')
+  var fs    = require('fs')
+
   function createServer (config) {
-
-    /**
-     * 依赖管理
-     */
-    var http  = require('http')
-    var url   = require('url')
-    var mysql = require('mysql')
-    var util  = require('util')
-    var fs    = require('fs')
-    var querystring = require('querystring')
-    var formidable  = require('formidable')
-
 
     /**
      * private
@@ -642,8 +598,6 @@ function serverFactory () {
 
         } else {
 
-
-          
           return false
         
         }
@@ -664,10 +618,8 @@ function serverFactory () {
 
       get_config: function() {
         return config
-      },
-
-      parse: parse
-
+      }
+      
     } // end server
 
     return server 
@@ -675,12 +627,10 @@ function serverFactory () {
   }
 
   return {
-    get_req_param: get_req_param,
     createServer: createServer,
     md5: md5,
     sha1: sha1,
     http_post: http_post,
-    validator: validator
   }
 
 }

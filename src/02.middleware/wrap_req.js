@@ -1,6 +1,8 @@
 function wrap_req (req) {
 
   var url = require('url')
+  var formidable  = require('formidable')
+  var querystring = require('querystring')
 
   var method = req.method.toLowerCase()
   var pathname = url.parse(req.url).pathname
@@ -33,45 +35,44 @@ function wrap_req (req) {
     if (method == 'post') {
 
       var form = new formidable.IncomingForm()
-      var result = {
-        "searches": {},
-        "files": []
+      var parseData = {
+        file_stack: []
       }
 
       /**
        * 缓存目录
        */
-      form.uploadDir = temp_dir
+      form.uploadDir = __dirname
 
       form.on('progress', function(bytesReceived, bytesExpected) {
 
       })
 
       .on('field', function(field, value) {
-        result.searches[field] = value
+        req.searches[field] = value
       })
 
       .on('file', function(file, value) {
-        result.files.push(file, value)
+        parseData.file_stack.push(file, value)
       })
 
       .on('aborted', function() {
-        result.error = "UNEXCEPT_ERROR"
+        callback('aborted')
       })
 
       .on('error', function(err) {
-        result.error = "UNEXCEPT_ERROR"
+        callback('error')
       })
 
       .on('end', function() {
-        callback(result)
+        callback(false, parseData)
       })
 
       form.parse(this)
 
     } else {
 
-      callback({error: "ONLY_POST"})
+      callback('method_error')
 
     }
 
